@@ -3,9 +3,19 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
 from typing import List
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware  # Import this
 
 # FastAPI instance
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allow your React frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # MSSQL Database connection (local) with Windows Authentication
 DATABASE_SERVER = "localhost"  # or use "ROG-G834JZ" if you prefer using the hostname
