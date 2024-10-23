@@ -1,0 +1,38 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.IO;
+using System.Threading.Tasks;
+
+namespace Base64ImageService.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ImagesController : ControllerBase
+    {
+        // POST: api/images/upload
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage([FromForm] IFormFile image)
+        {
+            if (image == null || image.Length == 0)
+                return BadRequest("No image provided.");
+
+            try
+            {
+                // Read the image file into a memory stream
+                using var memoryStream = new MemoryStream();
+                await image.CopyToAsync(memoryStream);
+
+                // Convert the image to a Base64 string
+                var base64String = Convert.ToBase64String(memoryStream.ToArray());
+
+                // Return the Base64 string
+                return Ok(new { base64Image = base64String });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+    }
+}
