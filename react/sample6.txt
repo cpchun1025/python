@@ -1,0 +1,28 @@
+public class ContactService : IContactService
+{
+    private readonly ApplicationDbContext _context;
+
+    public ContactService(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IEnumerable<Contact>> GetContactsAsync(DateTime? startDate, DateTime? endDate)
+    {
+        // Query the database for contacts
+        var query = _context.Contacts.AsQueryable();
+
+        // Apply filtering by startDate and endDate if provided
+        if (startDate.HasValue)
+        {
+            query = query.Where(c => c.CreatedDate >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            query = query.Where(c => c.CreatedDate <= endDate.Value);
+        }
+
+        return await query.ToListAsync();
+    }
+}

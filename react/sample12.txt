@@ -1,0 +1,50 @@
+<Toolbar>
+  <Item location='before'>
+    <div className='grid-header'>Contacts</div>
+  </Item>
+  <Item location='before' locateInMenu='auto'>
+    {/* Start Date Picker */}
+    <DateBox
+      placeholder="Start Date"
+      value={startDate}
+      onValueChanged={(e) => setStartDate(e.value)}
+    />
+  </Item>
+  <Item location='before' locateInMenu='auto'>
+    {/* End Date Picker */}
+    <DateBox
+      placeholder="End Date"
+      value={endDate}
+      onValueChanged={(e) => setEndDate(e.value)}
+    />
+  </Item>
+  <Item location='before' locateInMenu='auto'>
+    {/* Type Dropdown */}
+    <SelectBox
+      placeholder="Select Type"
+      dataSource={contactTypes} // Dynamically populated contact types
+      value={selectedType}
+      onValueChanged={(e) => setSelectedType(e.value)} // Update the selected type
+      showClearButton={true} // Allow clearing the filter
+    />
+  </Item>
+  <Item location='after'>
+    <Button
+      icon='refresh'
+      text='Refresh'
+      stylingMode='text'
+      onClick={refresh}
+    />
+  </Item>
+  <Item location='after'>
+    <Button
+      icon='plus'
+      text='Add Contact'
+      type='default'
+      stylingMode='contained'
+      onClick={onAddContactClick}
+    />
+  </Item>
+  <Item name='exportButton' />
+  <Item name='columnChooserButton' />
+</Toolbar>

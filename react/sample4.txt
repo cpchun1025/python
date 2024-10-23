@@ -1,0 +1,27 @@
+import axios from 'axios';
+
+const baseUrl = 'https://your-api-endpoint.com'; // Update with your API's base URL
+
+// Modified getContacts function to accept startDate and endDate
+export const getContacts = async (startDate?: Date, endDate?: Date) => {
+  const queryParams: string[] = [];
+
+  if (startDate) {
+    queryParams.push(`startDate=${startDate.toISOString()}`);
+  }
+
+  if (endDate) {
+    queryParams.push(`endDate=${endDate.toISOString()}`);
+  }
+
+  const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
+  const url = `Users/Contacts${queryString}`;
+
+  // Fetch the data from the .NET API
+  return await getData(url);
+};
+
+const getData = async (url: string) => {
+  const response = await axios.get(`${baseUrl}/${url}`);
+  return response.data;
+};

@@ -1,0 +1,12 @@
+import axios from 'axios';
+
+// Fetch contact types from the API
+const fetchContactTypes = async () => {
+  try {
+    const response = await axios.get('https://your-api-endpoint.com/api/contacttypes');
+    return response.data; // Assuming the API returns an array of contact types
+  } catch (error) {
+    console.error('Error fetching contact types:', error);
+    return [];
+  }
+};

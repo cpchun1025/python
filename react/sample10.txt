@@ -1,0 +1,12 @@
+const [contactTypes, setContactTypes] = useState<string[]>([]); // For storing contact types
+const [selectedType, setSelectedType] = useState<string | null>(null); // For storing selected type
+
+useEffect(() => {
+  // Fetch contact types when the component mounts
+  const loadContactTypes = async () => {
+    const types = await fetchContactTypes();
+    setContactTypes(types);
+  };
+
+  loadContactTypes();
+}, []);

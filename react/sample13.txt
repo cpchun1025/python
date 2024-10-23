@@ -1,0 +1,100 @@
+const CRMContactList = () => {
+  const [gridDataSource, setGridDataSource] = useState<DataSource<Contact[], string>>();
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [contactTypes, setContactTypes] = useState<string[]>([]); // For storing contact types
+  const [selectedType, setSelectedType] = useState<string | null>(null); // For selected type
+  
+  const gridRef = useRef<DataGridRef>(null);
+
+  // Fetch contact types on component mount
+  useEffect(() => {
+    const loadContactTypes = async () => {
+      const types = await fetchContactTypes();
+      setContactTypes(types);
+    };
+
+    loadContactTypes();
+  }, []);
+
+  // Load data with optional filters
+  useEffect(() => {
+    const loadData = () => {
+      const loadOptions: any = {};
+
+      // Apply date filters
+      if (startDate && endDate) {
+        loadOptions.filter = [
+          ['dateField', '>=', startDate],
+          'and',
+          ['dateField', '<=', endDate]
+        ];
+      }
+
+      // Apply type filter
+      if (selectedType) {
+        if (!loadOptions.filter) {
+          loadOptions.filter = [];
+        }
+        loadOptions.filter = [
+          ...loadOptions.filter,
+          ['type', '=', selectedType]
+        ];
+      }
+
+      setGridDataSource(new DataSource({
+        key: 'id',
+        load: () => getContacts(loadOptions),
+      }));
+    };
+
+    loadData();
+  }, [startDate, endDate, selectedType]);
+
+  return (
+    <div className='view crm-contact-list'>
+      <div className='view-wrapper view-wrapper-contact-list list-page'>
+        <DataGrid
+          className='grid theme-dependent'
+          dataSource={gridDataSource}
+          ref={gridRef}
+        >
+          <Toolbar>
+            {/* Existing toolbar items */}
+            <Item location='before' locateInMenu='auto'>
+              <DateBox
+                placeholder="Start Date"
+                value={startDate}
+                onValueChanged={(e) => setStartDate(e.value)}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DateBox
+                placeholder="End Date"
+                value={endDate}
+                onValueChanged={(e) => setEndDate(e.value)}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <SelectBox
+                placeholder="Select Type"
+                dataSource={contactTypes}
+                value={selectedType}
+                onValueChanged={(e) => setSelectedType(e.value)}
+                showClearButton={true}
+              />
+            </Item>
+          </Toolbar>
+
+          {/* Define columns */}
+          <Column dataField='name' caption='Name' sortOrder='asc' />
+          <Column dataField='type' caption='Type' />
+          <Column dataField='company' caption='Company' />
+          <Column dataField='status' caption='Status' />
+          <Column dataField='phone' caption='Phone' />
+          <Column dataField='email' caption='Email' />
+        </DataGrid>
+      </div>
+    </div>
+  );
+};

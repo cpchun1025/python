@@ -1,0 +1,34 @@
+useEffect(() => {
+  // Load data with optional filters (start date, end date, and type)
+  const loadData = () => {
+    const loadOptions: any = {};
+
+    // If startDate and endDate are set, apply them as filter criteria
+    if (startDate && endDate) {
+      loadOptions.filter = [
+        ['dateField', '>=', startDate],
+        'and',
+        ['dateField', '<=', endDate]
+      ];
+    }
+
+    // Apply type filtering if a type is selected
+    if (selectedType) {
+      if (!loadOptions.filter) {
+        loadOptions.filter = [];
+      }
+
+      loadOptions.filter = [
+        ...loadOptions.filter,
+        ['type', '=', selectedType]
+      ];
+    }
+
+    setGridDataSource(new DataSource({
+      key: 'id',
+      load: () => getContacts(loadOptions),
+    }));
+  };
+
+  loadData();
+}, [startDate, endDate, selectedType]); // Re-fetch data when dates or type change

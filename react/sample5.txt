@@ -1,0 +1,22 @@
+using Microsoft.AspNetCore.Mvc;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ContactsController : ControllerBase
+{
+    private readonly IContactService _contactService;
+
+    public ContactsController(IContactService contactService)
+    {
+        _contactService = contactService;
+    }
+
+    // GET: api/contacts
+    [HttpGet]
+    public async Task<IActionResult> GetContacts([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+    {
+        // Call a service method to get the filtered contacts
+        var contacts = await _contactService.GetContactsAsync(startDate, endDate);
+        return Ok(contacts);
+    }
+}

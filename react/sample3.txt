@@ -1,0 +1,60 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import DateBox from 'devextreme-react/date-box';  // Import DateBox
+import { getContacts } from './path-to-your-api';  // Import the modified getContacts function
+
+const CRMContactList = () => {
+  const [gridDataSource, setGridDataSource] = useState<DataSource<Contact[], string>>();
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const gridRef = useRef<DataGridRef>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      // Fetch contacts with the selected date range
+      const data = await getContacts(startDate, endDate);
+      setGridDataSource(new DataSource({
+        key: 'id',
+        load: () => data,
+      }));
+    };
+
+    loadData();
+  }, [startDate, endDate]); // Re-fetch data when dates change
+
+  return (
+    <div className='view crm-contact-list'>
+      <div className='view-wrapper view-wrapper-contact-list list-page'>
+        <Toolbar>
+          <Item location='before'>
+            {/* Start Date Picker */}
+            <DateBox
+              placeholder="Start Date"
+              value={startDate} // Date or undefined
+              onValueChanged={(e) => setStartDate(e.value)}
+            />
+          </Item>
+          <Item location='before'>
+            {/* End Date Picker */}
+            <DateBox
+              placeholder="End Date"
+              value={endDate} // Date or undefined
+              onValueChanged={(e) => setEndDate(e.value)}
+            />
+          </Item>
+        </Toolbar>
+
+        <DataGrid
+          dataSource={gridDataSource}
+          // other DataGrid props
+        >
+          {/* Define your columns here */}
+          <Column dataField='name' caption='Name' sortOrder='asc' />
+          <Column dataField='company' caption='Company' />
+          <Column dataField='status' caption='Status' />
+          <Column dataField='phone' caption='Phone' />
+          <Column dataField='email' caption='Email' />
+        </DataGrid>
+      </div>
+    </div>
+  );
+};

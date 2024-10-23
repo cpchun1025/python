@@ -1,0 +1,22 @@
+using Microsoft.AspNetCore.Mvc;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ContactTypesController : ControllerBase
+{
+    private readonly IContactService _contactService;
+
+    public ContactTypesController(IContactService contactService)
+    {
+        _contactService = contactService;
+    }
+
+    // GET: api/contacttypes
+    [HttpGet]
+    public async Task<IActionResult> GetContactTypes()
+    {
+        // Example: Fetching the contact types from the database or a predefined list
+        var contactTypes = await _contactService.GetContactTypesAsync();
+        return Ok(contactTypes);
+    }
+}

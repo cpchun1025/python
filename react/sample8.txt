@@ -1,0 +1,19 @@
+public class ContactService : IContactService
+{
+    private readonly ApplicationDbContext _context;
+
+    public ContactService(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    // Method to get contact types dynamically
+    public async Task<IEnumerable<string>> GetContactTypesAsync()
+    {
+        // Example: Fetching distinct contact types from the database
+        return await _context.Contacts
+            .Select(c => c.Type) // Assuming 'Type' is a property in the 'Contact' entity
+            .Distinct()
+            .ToListAsync();
+    }
+}

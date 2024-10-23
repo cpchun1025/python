@@ -1,0 +1,31 @@
+import axios from 'axios';
+
+const baseUrl = 'https://your-api-endpoint.com'; // Replace with your actual base URL
+
+// Modified getContacts function
+export const getContacts = async (startDate?: Date, endDate?: Date) => {
+  // If startDate and endDate are provided, format them as query parameters
+  const queryParams: string[] = [];
+
+  if (startDate) {
+    // Convert the date to an ISO string or a format your API expects
+    queryParams.push(`startDate=${startDate.toISOString()}`);
+  }
+
+  if (endDate) {
+    queryParams.push(`endDate=${endDate.toISOString()}`);
+  }
+
+  // Build the full URL with query parameters
+  const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
+  const url = `Users/Contacts${queryString}`;
+
+  // Fetch the data
+  return await getData(url);
+};
+
+// getData function remains the same
+const getData = async (url: string) => {
+  const response = await axios.get(`${baseUrl}/${url}`);
+  return response.data;
+};

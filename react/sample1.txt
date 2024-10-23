@@ -1,0 +1,94 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import DateBox from 'devextreme-react/date-box';  // Import DateBox
+
+// Your existing imports...
+
+const CRMContactList = () => {
+  // State for Grid Data
+  const [gridDataSource, setGridDataSource] = useState<DataSource<Contact[], string>>();
+  const [isPanelOpened, setPanelOpened] = useState(false);
+  const [contactId, setContactId] = useState<number>(0);
+  const [popupVisible, setPopupVisible] = useState(false);
+  
+  // New state for date filter (change null to undefined)
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  
+  const [formDataDefaults, setFormDataDefaults] = useState({ ...newContact });
+  const gridRef = useRef<DataGridRef>(null);
+
+  useEffect(() => {
+    // Load data with optional filter by date range
+    const loadData = () => {
+      const loadOptions: any = {};
+
+      // If startDate and endDate are set, apply them as filter criteria
+      if (startDate && endDate) {
+        loadOptions.filter = [
+          ['dateField', '>=', startDate],
+          'and',
+          ['dateField', '<=', endDate]
+        ];
+      }
+
+      setGridDataSource(new DataSource({
+        key: 'id',
+        load: () => getContacts(loadOptions),
+      }));
+    };
+
+    loadData();
+  }, [startDate, endDate]); // Re-fetch data when dates change
+
+  return (
+    <div className='view crm-contact-list'>
+      <div className='view-wrapper view-wrapper-contact-list list-page'>
+        <DataGrid
+          className='grid theme-dependent'
+          noDataText=''
+          focusedRowEnabled
+          height='100%'
+          dataSource={gridDataSource}
+          // ... other props ...
+        >
+          <Toolbar>
+            <Item location='before'>
+              <div className='grid-header'>Contacts</div>
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              {/* Start Date Picker */}
+              <DateBox
+                placeholder="Start Date"
+                value={startDate} // Notice the type is now Date | undefined
+                onValueChanged={(e) => setStartDate(e.value)}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              {/* End Date Picker */}
+              <DateBox
+                placeholder="End Date"
+                value={endDate} // Notice the type is now Date | undefined
+                onValueChanged={(e) => setEndDate(e.value)}
+              />
+            </Item>
+            <Item location='after'>
+              <Button
+                icon='refresh'
+                text='Refresh'
+                stylingMode='text'
+                onClick={() => gridRef.current?.instance().refresh()}
+              />
+            </Item>
+          </Toolbar>
+
+          {/* Define your columns here */}
+          <Column dataField='name' caption='Name' sortOrder='asc' />
+          <Column dataField='company' caption='Company' />
+          <Column dataField='status' caption='Status' />
+          <Column dataField='phone' caption='Phone' />
+          <Column dataField='email' caption='Email' />
+        </DataGrid>
+      </div>
+    </div>
+  );
+};
