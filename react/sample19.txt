@@ -1,0 +1,58 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+[ApiController]
+[Route("api/[controller]")]
+public class OpportunitiesController : ControllerBase
+{
+    private readonly CRMDbContext _context;
+
+    public OpportunitiesController(CRMDbContext context)
+    {
+        _context = context;
+    }
+
+    // GET: api/Opportunities/{contactId}
+    [HttpGet("{contactId}")]
+    public async Task<ActionResult<IEnumerable<Opportunity>>> GetOpportunities(int contactId)
+    {
+        return await _context.Opportunities
+            .Where(o => o.ContactId == contactId)
+            .ToListAsync();
+    }
+
+    // PUT: api/Opportunities/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateOpportunity(int id, Opportunity updatedOpportunity)
+    {
+        if (id != updatedOpportunity.Id)
+        {
+            return BadRequest();
+        }
+
+        _context.Entry(updatedOpportunity).State = EntityState.Modified;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!OpportunityExists(id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
+
+    private bool OpportunityExists(int id)
+    {
+        return _context.Opportunities.Any(e => e.Id == id);
+    }
+}

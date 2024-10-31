@@ -1,0 +1,181 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { jsPDF as JsPdf } from 'jspdf';
+import { saveAs } from 'file-saver-es';
+import { Workbook } from 'exceljs';
+
+import './crm-contact-list.scss';
+
+import { getContacts, getNewContacts } from 'dx-template-gallery-data';
+import {
+  DataGrid, DataGridRef,
+  Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
+  ColumnChooser, Export, Column, Toolbar, Item, LoadPanel,
+  DataGridTypes, MasterDetail
+} from 'devextreme-react/data-grid';
+
+import SelectBox from 'devextreme-react/select-box';
+import TextBox from 'devextreme-react/text-box';
+import DateBox from 'devextreme-react/date-box';
+import Button from 'devextreme-react/button';
+import notify from 'devextreme/ui/notify';
+
+import { ContactStatus as ContactStatusType, Contact } from '../../types/crm-contact';
+
+import { ContactStatus } from '../../components';
+import { CRMContactDetails } from './crm-contact-details';  // Import the detail component
+
+const filterStatusList = ['All', ...CONTACT_STATUS_LIST];
+
+const CRMContactList = () => {
+  const [gridDataSource, setGridDataSource] = useState<DataSource<Contact[], string>>();
+  const [expandedRows, setExpandedRows] = useState<number[]>([]); // Track expanded rows to prevent infinite load
+  const [status, setStatus] = useState(filterStatusList[0]);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [searchText, setSearchText] = useState<string | null>(null);
+  const gridRef = useRef<DataGridRef>(null);
+
+  // Load contacts on component mount
+  useEffect(() => {
+    setGridDataSource(new DataSource({
+      key: 'id',
+      load: () => getContacts(),
+    }));
+  }, []);
+
+  // Auto-refresh the grid when new data is detected
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      checkForNewData(); // Check for new data every 30 seconds
+    }, 30000); // 30 seconds interval for auto-refresh
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Function to check if new data is available
+  const checkForNewData = useCallback(() => {
+    getNewContacts().then((newData) => {
+      if (newData && newData.length > 0) {
+        notify({
+          message: 'New data available, refreshing...',
+          position: { at: 'bottom center', my: 'bottom center' },
+        }, 'info');
+        gridRef.current?.instance().refresh(); // Refresh the grid with new data
+      }
+    });
+  }, []);
+
+  // Filter logic
+  const applyFilters = useCallback(() => {
+    const grid = gridRef.current?.instance();
+    const filters = [];
+
+    if (status !== 'All') {
+      filters.push(['status', '=', status]);
+    }
+
+    if (startDate && endDate) {
+      filters.push(['createdDate', '>=', startDate], 'and', ['createdDate', '<=', endDate]);
+    }
+
+    if (searchText) {
+      filters.push(['name', 'contains', searchText]);
+    }
+
+    if (filters.length > 0) {
+      grid?.filter(filters);
+    } else {
+      grid?.clearFilter();
+    }
+  }, [status, startDate, endDate, searchText]);
+
+  // Handle row expansion to avoid infinite load of details
+  const handleMasterDetailExpanded = useCallback(({ key }) => {
+    if (!expandedRows.includes(key)) {
+      setExpandedRows([...expandedRows, key]); // Track expanded rows
+    }
+  }, [expandedRows]);
+
+  return (
+    <div className='view crm-contact-list'>
+      {/* External Toolbar for Filtering */}
+      <div className='toolbar'>
+        <SelectBox
+          dataSource={filterStatusList}
+          placeholder="Filter by Status"
+          value={status}
+          onValueChanged={(e) => setStatus(e.value)}
+        />
+        <DateBox
+          placeholder="Start Date"
+          value={startDate}
+          onValueChanged={(e) => setStartDate(e.value)}
+        />
+        <DateBox
+          placeholder="End Date"
+          value={endDate}
+          onValueChanged={(e) => setEndDate(e.value)}
+        />
+        <TextBox
+          placeholder="Search by Name"
+          value={searchText}
+          onValueChanged={(e) => setSearchText(e.value)}
+        />
+        <Button
+          icon='search'
+          text='Apply Filters'
+          type='default'
+          onClick={applyFilters}
+        />
+        <Button
+          icon='refresh'
+          text='Refresh'
+          stylingMode='text'
+          onClick={() => gridRef.current?.instance().refresh()}
+        />
+      </div>
+
+      {/* Master Grid */}
+      <div className='view-wrapper view-wrapper-contact-list list-page'>
+        <DataGrid
+          className='grid theme-dependent'
+          noDataText='No data to display'
+          focusedRowEnabled
+          height='100%'
+          dataSource={gridDataSource}
+          allowColumnReordering
+          showBorders
+          ref={gridRef}
+          keyExpr="id"
+          onRowExpanding={handleMasterDetailExpanded} // Track expanded rows
+        >
+          <LoadPanel showPane={false} />
+          <SearchPanel visible placeholder='Contact Search' />
+          <ColumnChooser enabled />
+          <Export enabled allowExportSelectedData formats={['xlsx', 'pdf']} />
+          <Selection selectAllMode='allPages' showCheckBoxesMode='always' mode='multiple' />
+          <HeaderFilter visible />
+          <Sorting mode='multiple' />
+          <Scrolling mode='virtual' />
+
+          {/* Master-Detail Configuration */}
+          <MasterDetail
+            enabled={true}
+            component={({ data }) => {
+              if (expandedRows.includes(data.key)) {
+                return <CRMContactDetails contactId={data.key} />;  // Load details only once
+              }
+              return null;
+            }}
+          />
+
+          {/* Define columns */}
+          <Column dataField='name' caption='Name' sortOrder='asc' />
+          <Column dataField='company' caption='Company' />
+          <Column dataField='status' caption='Status' cellRender={ContactStatus} />
+          <Column dataField='phone' caption='Phone' />
+          <Column dataField='email' caption='Email' />
+        </DataGrid>
+      </div>
+    </div>
+  );
+};

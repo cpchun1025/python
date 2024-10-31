@@ -1,0 +1,119 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import { Item, Toolbar } from 'devextreme-react/toolbar';
+import Button from 'devextreme-react/button';
+import ScrollView from 'devextreme-react/scroll-view';
+
+import { Contact, Opportunity, Note, Message } from '../../types/crm-contact'; // Assuming you have types defined
+import {
+  getContact,
+  getContactOpportunities,
+  getContactNotes,
+  getContactMessages,
+} from 'dx-template-gallery-data'; // Assuming you're fetching data from this service
+
+import './crm-contact-details.scss';
+
+interface CRMContactDetailsProps {
+  contactId: number; // Master grid will pass the contactId of the expanded row
+}
+
+export const CRMContactDetails = ({ contactId }: CRMContactDetailsProps) => {
+  const [contact, setContact] = useState<Contact | null>(null);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Fetch contact details and related data when component mounts or contactId changes
+  useEffect(() => {
+    setIsLoading(true); // Set loading state
+
+    // Fetch contact details, notes, opportunities, and messages
+    Promise.all([
+      getContact(contactId).then(setContact),
+      getContactOpportunities(contactId).then(setOpportunities),
+      getContactNotes(contactId).then(setNotes),
+      getContactMessages(contactId).then(setMessages),
+    ])
+      .then(() => setIsLoading(false))
+      .catch(() => setIsLoading(false)); // Ensure we stop the loading spinner even if an error occurs
+  }, [contactId]);
+
+  // Optional: A handler to refresh the contact details
+  const refreshDetails = useCallback(() => {
+    setIsLoading(true);
+    getContact(contactId).then(setContact).finally(() => setIsLoading(false));
+  }, [contactId]);
+
+  if (isLoading) {
+    return <div>Loading contact details...</div>;
+  }
+
+  return (
+    <ScrollView className="crm-contact-details">
+      {/* Toolbar or Actions for the contact */}
+      <Toolbar className="toolbar-details">
+        <Item location="before">
+          <Button icon="refresh" text="Refresh" onClick={refreshDetails} />
+        </Item>
+        <Item location="before">
+          <div>{contact?.name || 'Contact Details'}</div>
+        </Item>
+      </Toolbar>
+
+      {/* Contact Summary */}
+      <div className="contact-summary">
+        <h3>Contact Information</h3>
+        <p><strong>Name:</strong> {contact?.name}</p>
+        <p><strong>Email:</strong> {contact?.email}</p>
+        <p><strong>Phone:</strong> {contact?.phone}</p>
+        <p><strong>Status:</strong> {contact?.status}</p>
+        <p><strong>Company:</strong> {contact?.company}</p>
+      </div>
+
+      {/* Opportunities */}
+      <div className="contact-opportunities">
+        <h3>Opportunities</h3>
+        {opportunities.length > 0 ? (
+          <ul>
+            {opportunities.map((opp) => (
+              <li key={opp.id}>{opp.title} - {opp.status}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>No opportunities available.</p>
+        )}
+      </div>
+
+      {/* Notes */}
+      <div className="contact-notes">
+        <h3>Notes</h3>
+        {notes.length > 0 ? (
+          <ul>
+            {notes.map((note) => (
+              <li key={note.id}>{note.text}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>No notes available.</p>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div className="contact-messages">
+        <h3>Messages</h3>
+        {messages.length > 0 ? (
+          <ul>
+            {messages.map((message) => (
+              <li key={message.id}>
+                <p><strong>{message.sender}</strong>: {message.text}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No messages available.</p>
+        )}
+      </div>
+    </ScrollView>
+  );
+};

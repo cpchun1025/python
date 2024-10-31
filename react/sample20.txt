@@ -1,0 +1,64 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { DataGrid } from 'devextreme-react/data-grid';
+import notify from 'devextreme/ui/notify';
+
+const CRMContactDetails = ({ contactId }) => {
+  const [opportunities, setOpportunities] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch opportunities when component mounts or contactId changes
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(`/api/Opportunities/${contactId}`)
+      .then(response => response.json())
+      .then(data => {
+        setOpportunities(data);
+        setIsLoading(false);
+      });
+  }, [contactId]);
+
+  // Handle row updates (send updated data to the API)
+  const handleRowUpdating = useCallback((e) => {
+    const updatedData = { ...e.oldData, ...e.newData };  // Merge old and new data
+
+    // Send a PUT request to update the opportunity
+    fetch(`/api/Opportunities/${updatedData.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedData),
+    })
+      .then(response => {
+        if (response.ok) {
+          notify('Opportunity updated successfully', 'success', 2000);
+        } else {
+          notify('Failed to update opportunity', 'error', 2000);
+        }
+      })
+      .catch(() => {
+        notify('Failed to update opportunity', 'error', 2000);
+      });
+  }, []);
+
+  return (
+    <div className="crm-contact-details">
+      <h3>Opportunities</h3>
+      <DataGrid
+        dataSource={opportunities}
+        keyExpr="id"
+        showBorders={true}
+        editing={{
+          mode: 'row',  // Row editing mode
+          allowUpdating: true,  // Enable row editing
+        }}
+        onRowUpdating={handleRowUpdating}  // Trigger update when a row is edited
+      >
+        <Column dataField="title" caption="Title" />
+        <Column dataField="description" caption="Description" />
+        <Column dataField="status" caption="Status" />
+        <Column dataField="createdDate" caption="Created Date" dataType="date" />
+      </DataGrid>
+    </div>
+  );
+};
